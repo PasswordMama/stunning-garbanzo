@@ -1,0 +1,28 @@
+name: Build
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Build
+        run: |
+          ls -R | head -40
+          for z in *.zip; do
+            if [ -f "$z" ]; then unzip -q -o "$z"; fi
+          done
+          G=$(find . -name gradlew | head -1)
+          D=$(dirname "$G")
+          chmod +x "$G"
+          cd "$D"
+          ./gradlew build --no-daemon
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp build/libs/*.jar "$GITHUB_WORKSPACE/out/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: instant-rebreak-jar
+          path: out/*.jar
